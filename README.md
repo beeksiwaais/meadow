@@ -1,6 +1,9 @@
 # Meadow
 
+Work in progress. don't clone me for now 😅
+
 A Gleam based Gopher server
+
 
 [![Package Version](https://img.shields.io/hexpm/v/meadow)](https://hex.pm/packages/meadow)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/meadow/)
