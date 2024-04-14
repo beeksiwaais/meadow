@@ -1,21 +1,24 @@
-import gleam/io
 import gleam/bytes_builder
 import gleam/erlang/process
 import gleam/option.{None}
 import gleam/otp/actor
 import glisten.{Packet}
-import glisten/transport.{type Transport}
+import glisten/transport
 import gleam/string
 import gleam/list
 import gleam/int
 import gleam/bit_array
 import gleam/result
+import meadow/config
+import gleam/io
 
 type Entry {
   Entry(id: Int, message: String, path: String, host: String, port: Int)
 }
 
-pub type FileDescriptor
+pub type FileDescriptor {
+  FileDescriptor(Int)
+}
 
 pub type FileError {
   IsDir
@@ -24,59 +27,86 @@ pub type FileError {
   UnknownFileError
 }
 
+pub fn string_or_empty(string: BitArray) -> String {
+  bit_array.to_string(string)
+  |> result.unwrap("")
+}
+
 pub fn main() {
+  io.println("Starting Meadow")
+  let config = config.load_from_dotenv()
+
   let assert Ok(_) =
     glisten.handler(fn(_conn) { #(Nil, None) }, fn(msg, state, conn) {
       let assert Packet(msg) = msg
-      let lmsg =
-        bit_array.to_string(msg)
-        |> result.unwrap("")
+
       let assert Ok(_) =
-        glisten.send(conn, bytes_builder.from_string(format_response(lmsg)))
+        glisten.send(
+          conn,
+          bytes_builder.from_string(format_response(
+            string_or_empty(msg),
+            config,
+          )),
+        )
 
       let _ = transport.close(conn.transport, conn.socket)
       actor.continue(state)
     })
-    |> glisten.serve(70)
+    |> glisten.serve(config.port)
 
   process.sleep_forever()
 }
 
-fn format_response(msg: String) -> String {
-  let msg = string.trim(msg)
-  let root = "/"
-  let ignore_list = ["node_modules", ".git", ".DS_Store"]
+fn apply_gopher_format(entry: Entry) -> String {
+  io.debug(entry)
+  string.concat([
+    int.to_string(entry.id),
+    entry.message,
+    "\t",
+    entry.path,
+    "\t",
+    entry.host,
+    "\t",
+    int.to_string(entry.port),
+    "\r\n",
+  ])
+}
 
-  let path = string.concat([root, msg])
-  let assert Ok(_) = is_dir(bit_array.from_string(path))
+fn retries_entries(path: String, root: String) -> List(Entry) {
+  let gopher_path = string.replace(path, root, "")
 
-  // check if a .meadow file exists
+  list_files(bit_array.from_string(path))
+  |> result.unwrap(list.new())
+  |> list.map(fn(file) {
+    case dir_exists(bit_array.from_string(string.concat([path, file]))) {
+      True ->
+        Entry(1, file, string.concat([gopher_path, file]), "localhost", 70)
+      False ->
+        Entry(0, file, string.concat([gopher_path, file]), "localhost", 70)
+    }
+  })
+}
 
-  // else list dir and files
+fn format_response(msg: String, config: config.Configuration) -> String {
+  let msg = string.replace(string.trim(msg), "..", "")
+  let root = config.home
+  let path = root <> msg <> "/"
+  io.debug(path)
 
-  let entries =
-    list_files(bit_array.from_string(string.concat([root, msg])))
-    |> result.unwrap(list.new())
-    |> list.filter(fn(file) { !list.contains(ignore_list, file) })
+  let formatted = case dir_exists(bit_array.from_string(path)) {
+    True -> {
+      retries_entries(path, config.home)
+      |> list.map(fn(entry) { apply_gopher_format(entry) })
+    }
+    False -> {
+      // if text file render it
 
-  let lines =
-    entries
-    |> list.map(fn(file) { Entry(1, file, file, "localhost", 70) })
-    |> list.map(fn(entry) {
-      string.concat([
-        int.to_string(entry.id),
-        entry.message,
-        "\t",
-        entry.path,
-        "\t",
-        entry.host,
-        "\t",
-        int.to_string(entry.port),
-        "\r\n",
-      ])
-    })
+      // else send the binary file
+      [apply_gopher_format(Entry(3, "", "", "", 0))]
+    }
+  }
 
-  string.concat([string.concat(lines), "\r\n."])
+  string.concat(formatted) <> ".\r\n"
 }
 
 @external(erlang, "meadow_ffi", "file_open")
@@ -85,5 +115,5 @@ pub fn open_file(file: BitArray) -> Result(FileDescriptor, FileError)
 @external(erlang, "meadow_ffi", "list_files")
 pub fn list_files(path: BitArray) -> Result(List(String), FileError)
 
-@external(erlang, "meadow_ffi", "is_dir")
-pub fn is_dir(path: BitArray) -> Result(Bool, FileError)
+@external(erlang, "meadow_ffi", "dir_exists")
+pub fn dir_exists(path: BitArray) -> Bool

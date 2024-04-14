@@ -15,18 +15,14 @@ list_files(Path) ->
 
 dir_exists(Path) ->
     case filelib:is_dir(Path) of
-        true ->
-            true;
-        false ->
-            false
+        true -> true;
+        false -> false
     end.
 
 file_exists(Path) ->
     case filelib:is_file(Path) of
-        true ->
-            true;
-        false ->
-            false
+        true -> true;
+        false -> false
     end.
 
 file_open(Path) ->

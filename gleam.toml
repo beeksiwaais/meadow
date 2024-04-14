@@ -20,6 +20,8 @@ glisten = "~> 2.0"
 gleam_otp = "~> 0.10"
 gleam_erlang = "~> 0.25"
 dotenv = "~> 3.1"
+dotenvy = "~> 0.8"
+dot_env = "~> 0.5"
 
 [dev-dependencies]
 gleeunit = "~> 1.0"
