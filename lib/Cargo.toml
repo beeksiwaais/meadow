@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 rustler = "0.32.1"
+sqlite = "0.34.0"

@@ -11,10 +11,6 @@ import gleam/int
 import gleam/bit_array
 import gleam/result
 
-pub type Configuration {
-  Configuration(port: Int, fqn: String)
-}
-
 type Entry {
   Entry(id: Int, message: String, path: String, host: String, port: Int)
 }
