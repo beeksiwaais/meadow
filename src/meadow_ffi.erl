@@ -1,5 +1,5 @@
 -module(meadow_ffi).
--export([list_files/1, file_open/1, file_close/1]).
+-export([list_files/1, file_open/1, file_close/1, file_exists/1, dir_exists/1]).
 
 list_files(Path) ->
     case file:list_dir(Path) of
@@ -11,6 +11,22 @@ list_files(Path) ->
             {error, no_access};
         _ ->
             {error, unknown_file_error}
+    end.
+
+dir_exists(Path) ->
+    case filelib:is_dir(Path) of
+        true ->
+            true;
+        false ->
+            false
+    end.
+
+file_exists(Path) ->
+    case filelib:is_file(Path) of
+        true ->
+            true;
+        false ->
+            false
     end.
 
 file_open(Path) ->
