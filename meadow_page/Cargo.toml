@@ -1,0 +1,23 @@
+[package]
+name = "meadow_page"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "lib"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[target.'cfg(target_os = "macos")']
+rustflags = [
+    "-C", "link-arg=-undefined",
+    "-C", "link-arg=dynamic_lookup",
+]
+
+[dependencies]
+bison = "0.0.0"
+hematita = "0.1.0"
+rustler = "0.32.1"
+
+[dev-dependencies]
+clippy = "0.0.302"
