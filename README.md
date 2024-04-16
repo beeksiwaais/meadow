@@ -1,8 +1,6 @@
 # Meadow
 
-Work in progress. don't clone me for now 😅
-
-A Gleam based Gopher server
+A Gleam based Gopher server that supports dynamic page generation with Lua
 
 ## License
 

@@ -58,7 +58,6 @@ pub fn main() {
 }
 
 fn apply_gopher_format(entry: Entry) -> String {
-  io.debug(entry)
   string.concat([
     int.to_string(entry.id),
     entry.message,
@@ -91,7 +90,6 @@ fn format_response(msg: String, config: config.Configuration) -> String {
   let msg = string.replace(string.trim(msg), "..", "")
   let root = config.home
   let path = root <> msg <> "/"
-  io.debug(path)
 
   let formatted = case dir_exists(bit_array.from_string(path)) {
     True -> {
@@ -99,9 +97,7 @@ fn format_response(msg: String, config: config.Configuration) -> String {
       |> list.map(fn(entry) { apply_gopher_format(entry) })
     }
     False -> {
-      // if text file render it
-
-      // else send the binary file
+      // if file render/send it
       [apply_gopher_format(Entry(3, "", "", "", 0))]
     }
   }
@@ -109,11 +105,11 @@ fn format_response(msg: String, config: config.Configuration) -> String {
   string.concat(formatted) <> ".\r\n"
 }
 
-@external(erlang, "meadow_ffi", "file_open")
+@external(erlang, "erlfile_ffi", "file_open")
 pub fn open_file(file: BitArray) -> Result(FileDescriptor, FileError)
 
-@external(erlang, "meadow_ffi", "list_files")
+@external(erlang, "erlfile_ffi", "list_files")
 pub fn list_files(path: BitArray) -> Result(List(String), FileError)
 
-@external(erlang, "meadow_ffi", "dir_exists")
+@external(erlang, "erlfile_ffi", "dir_exists")
 pub fn dir_exists(path: BitArray) -> Bool

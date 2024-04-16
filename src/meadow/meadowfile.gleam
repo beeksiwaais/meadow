@@ -1,8 +1,2 @@
-//import gleam/bool
-
-//pub type Error
-
-//pub fn create_meadow(path: BitArray) -> Result(Bool, Error)
-
-//@external(erlang, "lib_ffi", "create_meadowfile")
-//fn create(path: BitArray) -> Result(Bool, Error)
+@external(erlang, "meadow_page_ffi", "read_meadow_page")
+fn read_meadow(path: BitArray) -> Bool
