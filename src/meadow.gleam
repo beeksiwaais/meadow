@@ -35,6 +35,7 @@ pub fn string_or_empty(string: BitArray) -> String {
 pub fn main() {
   io.println("Starting Meadow")
   let config = config.load_from_dotenv()
+  io.println("Root: " <> config.root)
 
   let assert Ok(_) =
     glisten.handler(fn(_conn) { #(Nil, None) }, fn(msg, state, conn) {
@@ -88,12 +89,12 @@ fn retries_entries(path: String, root: String) -> List(Entry) {
 
 fn format_response(msg: String, config: config.Configuration) -> String {
   let msg = string.replace(string.trim(msg), "..", "")
-  let root = config.home
+  let root = config.root
   let path = root <> msg <> "/"
 
   let formatted = case dir_exists(bit_array.from_string(path)) {
     True -> {
-      retries_entries(path, config.home)
+      retries_entries(path, config.root)
       |> list.map(fn(entry) { apply_gopher_format(entry) })
     }
     False -> {

@@ -1,5 +1,5 @@
--module(meadow_ffi).
--export([list_files/1, file_open/1, file_close/1, file_exists/1, dir_exists/1]).
+-module(erlfile_ffi).
+-export([list_files/1, file_open/1, file_close/1, file_exists/1, dir_exists/1, cwd/0]).
 
 list_files(Path) ->
     case file:list_dir(Path) of
@@ -52,3 +52,15 @@ file_close(File) ->
     _ ->
       {error, unknown_file_error}
   end.
+
+cwd() ->
+    case file:get_cwd() of
+        {ok, Path} ->
+            {ok, Path};
+        {error, enoent} ->
+            {error, no_entry};
+        {error, eacces} ->
+            {error, no_access};
+        _ ->
+            {error, unknown_file_error}
+    end.
