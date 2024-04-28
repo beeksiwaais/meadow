@@ -1,5 +1,5 @@
 -module(erlfile_ffi).
--export([list_files/1, file_open/1, file_close/1, file_exists/1, dir_exists/1, cwd/0]).
+-export([list_files/1, file_open/1, file_close/1, file_exists/1, dir_exists/1, cwd/0, is_text_file/1]).
 
 list_files(Path) ->
     case file:list_dir(Path) of
@@ -23,6 +23,26 @@ file_exists(Path) ->
     case filelib:is_file(Path) of
         true -> true;
         false -> false
+    end.
+
+is_text_file(FileName) ->
+    {ok, Binary} = file:read_file(FileName),
+    case is_text(Binary) of
+        true -> true;
+        false -> false
+    end.
+
+is_text(Binary) ->
+    <<FirstChunk:100/binary, _/binary>> = Binary,
+    case contains_non_printable(FirstChunk) of
+        true -> false;
+        false -> true
+    end.
+
+contains_non_printable(Chunk) ->
+    case re:run(Chunk, "[^[:print:]\t]") of
+        {match, _} -> true;
+        nomatch -> false
     end.
 
 file_open(Path) ->
