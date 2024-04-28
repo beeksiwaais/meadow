@@ -25,8 +25,8 @@ file_exists(Path) ->
         false -> false
     end.
 
-is_text_file(FileName) ->
-    {ok, Binary} = file:read_file(FileName),
+is_text_file(Path) ->
+    {ok, Binary} = file:read_file(Path),
     case is_text(Binary) of
         true -> true;
         false -> false

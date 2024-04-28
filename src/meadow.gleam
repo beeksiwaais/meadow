@@ -1,16 +1,16 @@
+import gleam/bit_array
 import gleam/bytes_builder
 import gleam/erlang/process
+import gleam/int
+import gleam/io
+import gleam/list
 import gleam/option.{None}
 import gleam/otp/actor
+import gleam/result
+import gleam/string
 import glisten.{Packet}
 import glisten/transport
-import gleam/string
-import gleam/list
-import gleam/int
-import gleam/bit_array
-import gleam/result
 import meadow/config
-import gleam/io
 
 type Entry {
   Entry(id: Int, message: String, path: String, host: String, port: Int)
@@ -82,7 +82,14 @@ fn retries_entries(path: String, root: String) -> List(Entry) {
       True ->
         Entry(1, file, string.concat([gopher_path, file]), "localhost", 70)
       False ->
-        Entry(0, file, string.concat([gopher_path, file]), "localhost", 70)
+        case is_text_file(bit_array.from_string(string.concat([path, file]))) {
+          True ->
+            Entry(0, file, string.concat([gopher_path, file]), "localhost", 70)
+          // regular text file
+          False ->
+            Entry(9, file, string.concat([gopher_path, file]), "localhost", 70)
+          // binary file
+        }
     }
   })
 }
@@ -99,7 +106,7 @@ fn format_response(msg: String, config: config.Configuration) -> String {
     }
     False -> {
       // if file render/send it
-      [apply_gopher_format(Entry(3, "", "", "", 0))]
+      [apply_gopher_format(Entry(3, "", "", "/dev/null", 0))]
     }
   }
 
@@ -114,3 +121,6 @@ pub fn list_files(path: BitArray) -> Result(List(String), FileError)
 
 @external(erlang, "erlfile_ffi", "dir_exists")
 pub fn dir_exists(path: BitArray) -> Bool
+
+@external(erlang, "erlfile_ffi", "is_text_file")
+pub fn is_text_file(path: BitArray) -> Bool
